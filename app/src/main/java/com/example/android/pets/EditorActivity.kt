@@ -26,6 +26,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
+import com.example.android.pets.data.PetContract.PetEntry
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -84,16 +85,16 @@ class EditorActivity : AppCompatActivity() {
                 val selection: String = parent.getItemAtPosition(position) as String
                 if (!TextUtils.isEmpty(selection)) {
                     mGender = when (selection) {
-                        getString(R.string.gender_male) -> 1 // Male
-                        getString(R.string.gender_female) -> 2 // Female
-                        else -> 0 // Unknown
+                        getString(R.string.gender_male) -> PetEntry.GENDER_MALE // Male
+                        getString(R.string.gender_female) -> PetEntry.GENDER_FEMALE // Female
+                        else -> PetEntry.GENDER_UNKNOWN // Unknown
                     }
                 }
             }
 
             // Because AdapterView is an abstract class, onNothingSelected must be defined
             override fun onNothingSelected(parent: AdapterView<*>) {
-                mGender = 0 // Unknown
+                mGender = PetEntry.GENDER_UNKNOWN // Unknown
             }
         }
     }
