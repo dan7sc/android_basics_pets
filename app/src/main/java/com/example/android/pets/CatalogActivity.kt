@@ -15,8 +15,10 @@
  */
 package com.example.android.pets
 
+import android.content.ContentValues
 import android.content.Intent
 import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AppCompatActivity
@@ -24,27 +26,17 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+
 import com.example.android.pets.data.PetContract.PetEntry
 import com.example.android.pets.data.PetDbHelper
-
-
 
 /**
  * Displays list of pets that were entered and stored in the app.
  */
 class CatalogActivity : AppCompatActivity() {
 
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_catalog)
-//
-//        // Setup FAB to open EditorActivity
-//        val fab: FloatingActionButton = findViewById(R.id.fab)
-//        fab.setOnClickListener {
-//            val intent = Intent(this@CatalogActivity, EditorActivity::class.java)
-//            startActivity(intent)
-//        }
-//    }
+    /** Database helper that will provide us access to the database  */
+    private var mDbHelper: PetDbHelper? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +49,10 @@ class CatalogActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // To access our database, we instantiate our subclass of SQLiteOpenHelper
+        // and pass the context, which is the current activity.
+        mDbHelper = PetDbHelper(this)
+
         displayDatabaseInfo()
     }
 
@@ -65,12 +61,8 @@ class CatalogActivity : AppCompatActivity() {
      * the pets database.
      */
     private fun displayDatabaseInfo() {
-        // To access our database, we instantiate our subclass of SQLiteOpenHelper
-        // and pass the context, which is the current activity.
-        val mDbHelper = PetDbHelper(this)
-
         // Create and/or open a database to read from it
-        val db = mDbHelper.readableDatabase
+        val db: SQLiteDatabase = mDbHelper!!.readableDatabase
 
         // Perform this raw SQL query "SELECT * FROM pets"
         // to get a Cursor that contains all rows from the pets table.
@@ -87,6 +79,31 @@ class CatalogActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Helper method to insert hardcoded pet data into the database. For debugging purposes only.
+     */
+    private fun insertPet() {
+        // Gets the database in write mode
+        val db: SQLiteDatabase = mDbHelper!!.writableDatabase
+
+        // Create a ContentValues object where column names are the keys,
+        // and Toto's pet attributes are the values.
+        val values = ContentValues()
+        values.put(PetEntry.COLUMN_PET_NAME, "Toto")
+        values.put(PetEntry.COLUMN_PET_BREED, "Terrier")
+        values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE)
+        values.put(PetEntry.COLUMN_PET_WEIGHT, 7)
+
+        // Insert a new row for Toto in the database, returning the ID of that new row.
+        // The first argument for db.insert() is the pets table name.
+        // The second argument provides the name of a column in which the framework
+        // can insert NULL in the event that the ContentValues is empty (if
+        // this is set to "null", then the framework will not insert a row when
+        // there are no values).
+        // The third argument is the ContentValues object containing the info for Toto.
+        val newRowId: Long = db.insert(PetEntry.TABLE_NAME, null, values)
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu options from the res/menu/menu_catalog.xml file.
         // This adds menu items to the app bar.
@@ -98,9 +115,11 @@ class CatalogActivity : AppCompatActivity() {
         // User clicked on a menu option in the app bar overflow menu
         when (item.itemId) {
             // Respond to a click on the "Insert dummy data" menu option
-            R.id.action_insert_dummy_data ->
-                // Do nothing for now
+            R.id.action_insert_dummy_data -> {
+                insertPet()
+                displayDatabaseInfo()
                 return true
+            }
             // Respond to a click on the "Delete all entries" menu option
             R.id.action_delete_all_entries ->
                 // Do nothing for now
