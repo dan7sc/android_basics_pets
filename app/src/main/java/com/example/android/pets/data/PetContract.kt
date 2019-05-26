@@ -31,28 +31,28 @@ object PetContract {
         companion object {
 
             /** Name of database table for pets  */
-            val TABLE_NAME: String = "pets"
+            const val TABLE_NAME: String = "pets"
 
             /**
              * Unique ID number for the pet (only for use in the database table).
              *
              * Type: INTEGER
              */
-            val _ID: String = BaseColumns._ID
+            const val _ID: String = BaseColumns._ID
 
             /**
              * Name of the pet.
              *
              * Type: TEXT
              */
-            val COLUMN_PET_NAME: String = "name"
+            const val COLUMN_PET_NAME: String = "name"
 
             /**
              * Breed of the pet.
              *
              * Type: TEXT
              */
-            val COLUMN_PET_BREED: String = "breed"
+            const val COLUMN_PET_BREED: String = "breed"
 
             /**
              * Gender of the pet.
@@ -62,21 +62,21 @@ object PetContract {
              *
              * Type: INTEGER
              */
-            val COLUMN_PET_GENDER: String = "gender"
+            const val COLUMN_PET_GENDER: String = "gender"
 
             /**
              * Weight of the pet.
              *
              * Type: INTEGER
              */
-            val COLUMN_PET_WEIGHT: String = "weight"
+            const val COLUMN_PET_WEIGHT: String = "weight"
 
             /**
              * Possible values for the gender of the pet.
              */
-            val GENDER_UNKNOWN: Int = 0
-            val GENDER_MALE: Int = 1
-            val GENDER_FEMALE: Int = 2
+            const val GENDER_UNKNOWN: Int = 0
+            const val GENDER_MALE: Int = 1
+            const val GENDER_FEMALE: Int = 2
         }
     }
 
