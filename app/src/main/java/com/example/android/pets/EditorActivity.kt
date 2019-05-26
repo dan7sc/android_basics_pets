@@ -27,6 +27,12 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
 import com.example.android.pets.data.PetContract.PetEntry
+import android.widget.Toast
+import android.content.ContentValues
+import android.database.sqlite.SQLiteDatabase
+import com.example.android.pets.data.PetDbHelper
+
+
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -46,10 +52,11 @@ class EditorActivity : AppCompatActivity() {
     private var mGenderSpinner: Spinner? = null
 
     /**
-     * Gender of the pet. The possible values are:
-     * 0 for unknown gender, 1 for male, 2 for female.
+     * Gender of the pet. The possible valid values are in the PetContract.java file:
+     * [PetEntry.GENDER_UNKNOWN], [PetEntry.GENDER_MALE], or
+     * [PetEntry.GENDER_FEMALE].
      */
-    private var mGender = 0
+    private var mGender = PetEntry.GENDER_UNKNOWN
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,6 +106,44 @@ class EditorActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Get user input from editor and save new pet into database.
+     */
+    private fun insertPet() {
+        // Read from input fields
+        // Use trim to eliminate leading or trailing white space
+        val nameString: String = this.mNameEditText!!.text.toString().trim()
+        val breedString: String = this.mBreedEditText!!.text.toString().trim()
+        val weightString: String = this.mWeightEditText!!.text.toString().trim()
+        val weight: Int = Integer.parseInt(weightString)
+
+        // Create database helper
+        val mDbHelper = PetDbHelper(this)
+
+        // Gets the database in write mode
+        val db: SQLiteDatabase = mDbHelper.writableDatabase
+
+        // Create a ContentValues object where column names are the keys,
+        // and pet attributes from the editor are the values.
+        val values = ContentValues()
+        values.put(PetEntry.COLUMN_PET_NAME, nameString)
+        values.put(PetEntry.COLUMN_PET_BREED, breedString)
+        values.put(PetEntry.COLUMN_PET_GENDER, mGender)
+        values.put(PetEntry.COLUMN_PET_WEIGHT, weight)
+
+        // Insert a new row for pet in the database, returning the ID of that new row.
+        val newRowId: Long = db.insert(PetEntry.TABLE_NAME, null, values)
+
+        // Show a toast message depending on whether or not the insertion was successful
+        if (newRowId == (-1).toLong()) {
+            // If the row ID is -1, then there was an error with insertion.
+            Toast.makeText(this, "Error with saving pet", Toast.LENGTH_SHORT).show()
+        } else {
+            // Otherwise, the insertion was successful and we can display a toast with the row ID.
+            Toast.makeText(this, "Pet saved with row id: $newRowId", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu options from the res/menu/menu_editor.xml file.
         // This adds menu items to the app bar.
@@ -110,9 +155,13 @@ class EditorActivity : AppCompatActivity() {
         // User clicked on a menu option in the app bar overflow menu
         when (item.itemId) {
             // Respond to a click on the "Save" menu option
-            R.id.action_save ->
-                // Do nothing for now
+            R.id.action_save -> {
+                // Save pet to database
+                insertPet()
+                // Exit activity
+                finish()
                 return true
+            }
             // Respond to a click on the "Delete" menu option
             R.id.action_delete ->
                 // Do nothing for now
