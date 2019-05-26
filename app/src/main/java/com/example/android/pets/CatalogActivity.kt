@@ -30,6 +30,7 @@ import android.widget.TextView
 import com.example.android.pets.data.PetContract.PetEntry
 import com.example.android.pets.data.PetDbHelper
 
+
 /**
  * Displays list of pets that were entered and stored in the app.
  */
@@ -69,9 +70,30 @@ class CatalogActivity : AppCompatActivity() {
         // Create and/or open a database to read from it
         val db: SQLiteDatabase = mDbHelper!!.readableDatabase
 
-        // Perform this raw SQL query "SELECT * FROM pets"
-        // to get a Cursor that contains all rows from the pets table.
-        val cursor: Cursor = db.rawQuery("SELECT * FROM " + PetEntry.TABLE_NAME, null)
+//        // Perform this raw SQL query "SELECT * FROM pets"
+//        // to get a Cursor that contains all rows from the pets table.
+//        val cursor = db.rawQuery("SELECT * FROM " + PetEntry.TABLE_NAME, null)
+
+        // Define a projection that specifies which columns from the database
+        // you will actually use after this query.
+        val projection: Array<String> = arrayOf(
+                PetEntry._ID,
+                PetEntry.COLUMN_PET_NAME,
+                PetEntry.COLUMN_PET_BREED,
+                PetEntry.COLUMN_PET_GENDER,
+                PetEntry.COLUMN_PET_WEIGHT
+        )
+
+        // Perform a query on the pets table
+        val cursor: Cursor = db.query(
+                PetEntry.TABLE_NAME, // The table to query
+                projection, // The columns to return
+                null, // The columns for the WHERE clause
+                null, // The values for the WHERE clause
+                null, // Don't group the rows
+                null, // Don't filter by row groups
+                null) // The sort order
+
         try {
             // Display the number of rows in the Cursor (which reflects the number of rows in the
             // pets table in the database).
