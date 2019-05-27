@@ -31,6 +31,7 @@ import com.example.android.pets.data.PetContract.PetEntry
 import com.example.android.pets.data.PetDbHelper
 
 
+
 /**
  * Displays list of pets that were entered and stored in the app.
  */
@@ -80,15 +81,14 @@ class CatalogActivity : AppCompatActivity() {
                 PetEntry.COLUMN_PET_WEIGHT
         )
 
-        // Perform a query on the pets table
-        val cursor: Cursor = db.query(
-                PetEntry.TABLE_NAME, // The table to query
-                projection, // The columns to return
-                null, // The columns for the WHERE clause
-                null, // The values for the WHERE clause
-                null, // Don't group the rows
-                null, // Don't filter by row groups
-                null) // The sort order
+        // Perform a query on the provider using the ContentResolver.
+        // Use the {@link PetEntry#CONTENT_URI} to access the pet data.
+        val cursor = contentResolver.query(
+                PetEntry.CONTENT_URI, // The content URI of the words table
+                projection, // The columns to return for each row
+                null, // Selection criteria
+                null, // Selection criteria
+                null) // The sort order for the returned rows
 
         val displayView: TextView = findViewById<View>(R.id.text_view_pet) as TextView
 
