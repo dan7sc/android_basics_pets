@@ -29,8 +29,7 @@ import android.widget.Spinner
 import com.example.android.pets.data.PetContract.PetEntry
 import android.widget.Toast
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
-import com.example.android.pets.data.PetDbHelper
+import android.net.Uri
 
 
 
@@ -117,12 +116,6 @@ class EditorActivity : AppCompatActivity() {
         val weightString: String = this.mWeightEditText!!.text.toString().trim()
         val weight: Int = Integer.parseInt(weightString)
 
-        // Create database helper
-        val mDbHelper = PetDbHelper(this)
-
-        // Gets the database in write mode
-        val db: SQLiteDatabase = mDbHelper.writableDatabase
-
         // Create a ContentValues object where column names are the keys,
         // and pet attributes from the editor are the values.
         val values = ContentValues()
@@ -131,16 +124,16 @@ class EditorActivity : AppCompatActivity() {
         values.put(PetEntry.COLUMN_PET_GENDER, mGender)
         values.put(PetEntry.COLUMN_PET_WEIGHT, weight)
 
-        // Insert a new row for pet in the database, returning the ID of that new row.
-        val newRowId: Long = db.insert(PetEntry.TABLE_NAME, null, values)
+        // Insert a new pet into the provider, returning the content URI for the new pet.
+        val newUri: Uri? = contentResolver.insert(PetEntry.CONTENT_URI, values)
 
         // Show a toast message depending on whether or not the insertion was successful
-        if (newRowId == (-1).toLong()) {
+        if (newUri!!.equals((-1).toLong())) {
             // If the row ID is -1, then there was an error with insertion.
             Toast.makeText(this, "Error with saving pet", Toast.LENGTH_SHORT).show()
         } else {
             // Otherwise, the insertion was successful and we can display a toast with the row ID.
-            Toast.makeText(this, "Pet saved with row id: $newRowId", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Pet saved with row id: $newUri", Toast.LENGTH_SHORT).show()
         }
     }
 
