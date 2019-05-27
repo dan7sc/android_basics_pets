@@ -5,7 +5,8 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.content.UriMatcher
-
+import com.example.android.pets.data.PetContract.PetEntry
+import android.content.ContentUris
 
 
 /**
@@ -54,9 +55,6 @@ class PetProvider : ContentProvider() {
      * Initialize the provider and the database helper object.
      */
     override fun onCreate(): Boolean {
-        // TODO: Create and initialize a PetDbHelper object to gain access to the pets database.
-        // Make sure the variable is a global variable, so it can be referenced from other
-        // ContentProvider methods.
         mDbHelper = PetDbHelper(context!!)
         return true
     }
@@ -66,7 +64,49 @@ class PetProvider : ContentProvider() {
      */
     override fun query(uri: Uri, projection: Array<String>?, selection: String?, selectionArgs: Array<String>?,
                        sortOrder: String?): Cursor? {
-        return null
+        var selection: String? = selection
+        var selectionArgs: Array<String>? = selectionArgs
+        // Get readable database
+        val database = mDbHelper!!.readableDatabase
+
+        // This cursor will hold the result of the query
+        val cursor: Cursor
+
+        // Figure out if the URI matcher can match the URI to a specific code
+        val match = sUriMatcher.match(uri)
+        when (match) {
+            PETS ->
+                // For the PETS code, query the pets table directly with the given
+                // projection, selection, selection arguments, and sort order. The cursor
+                // could contain multiple rows of the pets table.
+                cursor = database.query(
+                        PetEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                )
+            PET_ID -> {
+                // For the PET_ID code, extract out the ID from the URI.
+                // For an example URI such as "content://com.example.android.pets/pets/3",
+                // the selection will be "_id=?" and the selection argument will be a
+                // String array containing the actual ID of 3 in this case.
+                //
+                // For every "?" in the selection, we need to have an element in the selection
+                // arguments that will fill in the "?". Since we have 1 question mark in the
+                // selection, we have 1 String in the selection arguments' String array.
+                selection = PetEntry._ID + "=?"
+                selectionArgs = arrayOf(ContentUris.parseId(uri).toString())
+
+                // This will perform a query on the pets table where the _id equals 3 to return a
+                // Cursor containing that row of the table.
+                cursor = database.query(PetEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder)
+            }
+            else -> throw IllegalArgumentException("Cannot query unknown URI $uri")
+        }
+        return cursor
     }
 
     /**
