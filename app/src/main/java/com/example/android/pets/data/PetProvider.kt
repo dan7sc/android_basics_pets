@@ -68,6 +68,7 @@ class PetProvider : ContentProvider() {
      */
     override fun query(uri: Uri, projection: Array<String>?, selection: String?, selectionArgs: Array<String>?,
                        sortOrder: String?): Cursor? {
+
         var selection: String? = selection
         var selectionArgs: Array<String>? = selectionArgs
         // Get readable database
@@ -119,7 +120,7 @@ class PetProvider : ContentProvider() {
     override fun insert(uri: Uri, contentValues: ContentValues?): Uri? {
         val match = sUriMatcher.match(uri)
         when (match) {
-            PETS -> return insertPet(uri, contentValues)
+            PETS -> return insertPet(uri, contentValues!!)
             else -> throw IllegalArgumentException("Insertion is not supported for $uri")
         }
     }
@@ -128,14 +129,34 @@ class PetProvider : ContentProvider() {
      * Insert a pet into the database with the given content values. Return the new content URI
      * for that specific row in the database.
      */
-    private fun insertPet(uri: Uri, values: ContentValues?): Uri? {
+    private fun insertPet(uri: Uri, values: ContentValues): Uri? {
+        // Check that the name is not null
+        val name: String? = values.getAsString(PetEntry.COLUMN_PET_NAME)
+        if (name == null) {
+            throw IllegalArgumentException("Pet requires a name")
+        }
+
+        // Check that the gender is valid
+        val gender: Int? = values.getAsInteger(PetEntry.COLUMN_PET_GENDER)
+        if (gender == null || !PetEntry.isValidGender(gender)) {
+            throw IllegalArgumentException("Pet requires valid gender")
+        }
+
+        // If the weight is provided, check that it's greater than or equal to 0 kg
+        val weight = values.getAsInteger(PetEntry.COLUMN_PET_WEIGHT)
+        if (weight != null && weight < 0) {
+            throw IllegalArgumentException("Pet requires valid weight")
+        }
+
+        // No need to check the breed, any value is valid (including null).
+
         // Get writeable database
         val database = mDbHelper!!.writableDatabase
 
         // Insert the new pet with the given values
         val id = database.insert(PetEntry.TABLE_NAME, null, values)
         // If the ID is -1, then the insertion failed. Log an error and return null.
-        if (id.equals((-1))) {
+        if (id.equals(-1)) {
             Log.e(LOG_TAG, "Failed to insert row for $uri")
             return null
         }

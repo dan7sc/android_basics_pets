@@ -19,6 +19,7 @@ package com.example.android.pets.data
 import android.net.Uri
 import android.provider.BaseColumns
 
+
 /**
  * API Contract for the Pets app.
  */
@@ -29,13 +30,13 @@ object PetContract {
      * content authority is the package name for the app, which is guaranteed to be unique on the
      * device.
      */
-    val CONTENT_AUTHORITY = "com.example.android.pets"
+    val CONTENT_AUTHORITY: String = "com.example.android.pets"
 
     /**
      * Use CONTENT_AUTHORITY to create the base of all URI's which apps will use to contact
      * the content provider.
      */
-    val BASE_CONTENT_URI = Uri.parse("content://$CONTENT_AUTHORITY")
+    val BASE_CONTENT_URI: Uri = Uri.parse("content://$CONTENT_AUTHORITY")
 
     /**
      * Possible path (appended to base content URI for possible URI's)
@@ -43,7 +44,7 @@ object PetContract {
      * looking at pet data. content://com.example.android.pets/staff/ will fail,
      * as the ContentProvider hasn't been given any information on what to do with "staff".
      */
-    val PATH_PETS = "pets"
+    val PATH_PETS: String = "pets"
 
     /**
      * Inner class that defines constant values for the pets database table.
@@ -53,7 +54,7 @@ object PetContract {
         companion object {
 
             /** The content URI to access the pet data in the provider  */
-            val CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_PETS)
+            val CONTENT_URI: Uri = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_PETS)
 
             /** Name of database table for pets  */
             const val TABLE_NAME: String = "pets"
@@ -102,10 +103,14 @@ object PetContract {
             const val GENDER_UNKNOWN: Int = 0
             const val GENDER_MALE: Int = 1
             const val GENDER_FEMALE: Int = 2
+
+            /**
+             * Returns whether or not the given gender is [.GENDER_UNKNOWN], [.GENDER_MALE],
+             * or [.GENDER_FEMALE].
+             */
+            fun isValidGender(gender: Int): Boolean {
+                return gender == GENDER_UNKNOWN || gender == GENDER_MALE || gender == GENDER_FEMALE
+            }
         }
     }
-
 }
-// To prevent someone from accidentally instantiating the contract class,
-// give it an empty constructor.
-
