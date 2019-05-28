@@ -139,7 +139,16 @@ class EditorActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor
         val nameString: String = mNameEditText!!.text.toString().trim()
         val breedString: String = mBreedEditText!!.text.toString().trim()
         val weightString: String = mWeightEditText!!.text.toString().trim()
-        val weight: Int = Integer.parseInt(weightString)
+
+        // Check if this is supposed to be a new pet
+        // and check if all the fields in the editor are blank
+        if (mCurrentPetUri == null &&
+                TextUtils.isEmpty(nameString) && TextUtils.isEmpty(breedString) &&
+                TextUtils.isEmpty(weightString) && mGender == PetEntry.GENDER_UNKNOWN) {
+            // Since no fields were modified, we can return early without creating a new pet.
+            // No need to create ContentValues and no need to do any ContentProvider operations.
+            return
+        }
 
         // Create a ContentValues object where column names are the keys,
         // and pet attributes from the editor are the values.
@@ -147,6 +156,12 @@ class EditorActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor
         values.put(PetEntry.COLUMN_PET_NAME, nameString)
         values.put(PetEntry.COLUMN_PET_BREED, breedString)
         values.put(PetEntry.COLUMN_PET_GENDER, mGender)
+        // If the weight is not provided by the user, don't try to parse the string into an
+        // integer value. Use 0 by default.
+        var weight = 0
+        if (!TextUtils.isEmpty(weightString)) {
+            weight = Integer.parseInt(weightString)
+        }
         values.put(PetEntry.COLUMN_PET_WEIGHT, weight)
 
         // Determine if this is a new or existing pet by checking if mCurrentPetUri is null or not
@@ -170,7 +185,7 @@ class EditorActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor
             // and pass in the new ContentValues. Pass in null for the selection and selection args
             // because mCurrentPetUri will already identify the correct row in the database that
             // we want to modify.
-            val rowsAffected = contentResolver.update(mCurrentPetUri, values, null, null)
+            val rowsAffected: Int = contentResolver.update(mCurrentPetUri!!, values, null, null)
 
             // Show a toast message depending on whether or not the update was successful.
             if (rowsAffected == 0) {
