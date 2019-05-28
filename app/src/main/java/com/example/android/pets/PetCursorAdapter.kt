@@ -38,7 +38,7 @@ class PetCursorAdapter
  * @param context The context
  * @param c       The cursor from which to get the data.
  */
-(context: Context, c: Cursor)/* flags */ : CursorAdapter(context, c, 0) {
+(context: Context, c: Cursor?)/* flags */ : CursorAdapter(context, c, 0) {
 
     /**
      * Makes a new blank list item view. No data is set (or bound) to the views yet.

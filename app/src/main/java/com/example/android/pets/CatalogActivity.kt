@@ -20,6 +20,9 @@ import android.content.Intent
 import android.database.Cursor
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
+import android.support.v4.app.LoaderManager
+import android.support.v4.content.CursorLoader
+import android.support.v4.content.Loader
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
@@ -31,7 +34,11 @@ import com.example.android.pets.data.PetContract.PetEntry
 /**
  * Displays list of pets that were entered and stored in the app.
  */
-class CatalogActivity : AppCompatActivity() {
+@Suppress("DEPRECATION")
+class CatalogActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> {
+
+    /** Adapter for the ListView  */
+    lateinit var mCursorAdapter: PetCursorAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,49 +50,21 @@ class CatalogActivity : AppCompatActivity() {
             val intent = Intent(this@CatalogActivity, EditorActivity::class.java)
             startActivity(intent)
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        displayDatabaseInfo()
-    }
-
-    /**
-     * Temporary helper method to display information in the onscreen TextView about the state of
-     * the pets database.
-     */
-    private fun displayDatabaseInfo() {
-        // Define a projection that specifies which columns from the database
-        // you will actually use after this query.
-        val projection: Array<String> = arrayOf(
-                PetEntry._ID,
-                PetEntry.COLUMN_PET_NAME,
-                PetEntry.COLUMN_PET_BREED,
-                PetEntry.COLUMN_PET_GENDER,
-                PetEntry.COLUMN_PET_WEIGHT
-        )
-
-        // Perform a query on the provider using the ContentResolver.
-        // Use the {@link PetEntry#CONTENT_URI} to access the pet data.
-        val cursor: Cursor? = contentResolver.query(
-                PetEntry.CONTENT_URI, // The content URI of the words table
-                projection, // The columns to return for each row
-                null, // Selection criteria
-                null, // Selection criteria
-                null) // The sort order for the returned rows
 
         // Find the ListView which will be populated with the pet data
-        val petListView = findViewById<View>(R.id.list) as ListView
+        val petListView: ListView = findViewById<View>(R.id.list) as ListView
 
         // Find and set empty view on the ListView, so that it only shows when the list has 0 items.
-        val emptyView = findViewById<View>(R.id.empty_view)
+        val emptyView: View = findViewById<View>(R.id.empty_view)
         petListView.emptyView = emptyView
 
         // Setup an Adapter to create a list item for each row of pet data in the Cursor.
-        val adapter = PetCursorAdapter(this, cursor!!)
+        // There is no pet data yet (until the loader finishes) so pass in null for the Cursor.
+        mCursorAdapter = PetCursorAdapter(this, null)
+        petListView.adapter = mCursorAdapter
 
-        // Attach the adapter to the ListView.
-        petListView.adapter = adapter
+        // Kick off the loader
+        supportLoaderManager.initLoader(PET_LOADER, null, this)
     }
 
     /**
@@ -121,7 +100,6 @@ class CatalogActivity : AppCompatActivity() {
             // Respond to a click on the "Insert dummy data" menu option
             R.id.action_insert_dummy_data -> {
                 insertPet()
-                displayDatabaseInfo()
                 return true
             }
             // Respond to a click on the "Delete all entries" menu option
@@ -130,5 +108,39 @@ class CatalogActivity : AppCompatActivity() {
                 return true
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onCreateLoader(i: Int, bundle: Bundle?): Loader<Cursor> {
+        // Define a projection that specifies the columns from the table we care about.
+        val projection = arrayOf(
+                PetEntry._ID,
+                PetEntry.COLUMN_PET_NAME,
+                PetEntry.COLUMN_PET_BREED
+        )
+
+        // This loader will execute the ContentProvider's query method on a background thread
+        return CursorLoader(
+                this, // Parent activity context
+                PetEntry.CONTENT_URI, // Provider content URI to query
+                projection, // Columns to include in the resulting Cursor
+                null, // No selection clause
+                null, // No selection arguments
+                null // Default sort order
+        )
+    }
+
+    override fun onLoadFinished(loader: Loader<Cursor>, data: Cursor) {
+        // Update {@link PetCursorAdapter} with this new cursor containing updated pet data
+        mCursorAdapter.swapCursor(data)
+    }
+
+    override fun onLoaderReset(loader: Loader<Cursor>) {
+        // Callback called when the data needs to be deleted
+        mCursorAdapter.swapCursor(null)
+    }
+
+    companion object {
+        /** Identifier for the pet data loader  */
+        private val PET_LOADER = 0
     }
 }
