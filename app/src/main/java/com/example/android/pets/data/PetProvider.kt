@@ -112,6 +112,12 @@ class PetProvider : ContentProvider() {
             }
             else -> throw IllegalArgumentException("Cannot query unknown URI $uri")
         }
+        // Set notification URI on the Cursor,
+        // so we know what content URI the Cursor was created for.
+        // If the data at this URI changes, then we know we need to update the Cursor.
+        cursor.setNotificationUri(context!!.contentResolver, uri)
+
+        // Return the cursor
         return cursor
     }
 
@@ -162,6 +168,9 @@ class PetProvider : ContentProvider() {
             return null
         }
 
+        // Notify all listeners that the data has changed for the pet content URI
+        context!!.contentResolver.notifyChange(uri, null)
+
         // Return the new URI with the ID (of the newly inserted row) appended at the end
         return ContentUris.withAppendedId(uri, id)
     }
@@ -175,14 +184,14 @@ class PetProvider : ContentProvider() {
         var selectionArgs: Array<String>? = selectionArgs
         val match: Int? = sUriMatcher.match(uri)
         return when (match) {
-            PETS -> updatePet(contentValues!!, selection, selectionArgs)
+            PETS -> updatePet(uri, contentValues!!, selection, selectionArgs)
             PET_ID -> {
                 // For the PET_ID code, extract out the ID from the URI,
                 // so we know which row to update. Selection will be "_id=?" and selection
                 // arguments will be a String array containing the actual ID.
                 selection = PetEntry._ID + "=?"
                 selectionArgs = arrayOf(ContentUris.parseId(uri).toString())
-                updatePet(contentValues!!, selection, selectionArgs)
+                updatePet(uri, contentValues!!, selection, selectionArgs)
             }
             else -> throw IllegalArgumentException("Update is not supported for $uri")
         }
@@ -193,7 +202,7 @@ class PetProvider : ContentProvider() {
      * specified in the selection and selection arguments (which could be 0 or 1 or more pets).
      * Return the number of rows that were successfully updated.
      */
-    private fun updatePet(values: ContentValues, selection: String?, selectionArgs: Array<String>?): Int {
+    private fun updatePet(uri: Uri, values: ContentValues, selection: String?, selectionArgs: Array<String>?): Int {
         // If the {@link PetEntry#COLUMN_PET_NAME} key is present,
         // check that the name value is not null.
         if (values.containsKey(PetEntry.COLUMN_PET_NAME)) {
@@ -232,32 +241,53 @@ class PetProvider : ContentProvider() {
         // Otherwise, get writeable database to update the data
         val database: SQLiteDatabase = mDbHelper!!.writableDatabase
 
-        // Returns the number of database rows affected by the update statement
-        return database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs)
+        // Perform the update on the database and get the number of rows affected
+        val rowsUpdated = database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs)
+
+        // If 1 or more rows were updated, then notify all listeners that the data at the
+        // given URI has changed
+        if (rowsUpdated != 0) {
+            context!!.contentResolver.notifyChange(uri, null)
+        }
+
+        // Return the number of rows updated
+        return rowsUpdated
     }
 
     /**
      * Delete the data at the given selection and selection arguments.
      */
-    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
-        var selection: String? = selection
-        var selectionArgs: Array<String>? = selectionArgs
+    public override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
+        var selection = selection
+        var selectionArgs = selectionArgs
         // Get writeable database
-        val database: SQLiteDatabase = mDbHelper!!.writableDatabase
+        val database = mDbHelper!!.getWritableDatabase()
 
-        val match: Int? = sUriMatcher.match(uri)
-        return when (match) {
+        // Track the number of rows that were deleted
+        val rowsDeleted: Int
+
+        val match = sUriMatcher.match(uri)
+        when (match) {
             PETS ->
                 // Delete all rows that match the selection and selection args
-                database.delete(PetEntry.TABLE_NAME, selection, selectionArgs)
+                rowsDeleted = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs)
             PET_ID -> {
                 // Delete a single row given by the ID in the URI
                 selection = PetEntry._ID + "=?"
                 selectionArgs = arrayOf(ContentUris.parseId(uri).toString())
-                database.delete(PetEntry.TABLE_NAME, selection, selectionArgs)
+                rowsDeleted = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs)
             }
             else -> throw IllegalArgumentException("Deletion is not supported for $uri")
         }
+
+        // If 1 or more rows were deleted, then notify all listeners that the data at the
+        // given URI has changed
+        if (rowsDeleted != 0) {
+            context!!.contentResolver.notifyChange(uri, null)
+        }
+
+        // Return the number of rows deleted
+        return rowsDeleted
     }
 
     /**
@@ -273,7 +303,6 @@ class PetProvider : ContentProvider() {
     }
 
     companion object {
-
         /** Tag for the log messages  */
         val LOG_TAG: String = PetProvider::class.java.simpleName
     }
