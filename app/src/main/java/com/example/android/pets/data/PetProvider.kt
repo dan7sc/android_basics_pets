@@ -230,7 +230,7 @@ class PetProvider : ContentProvider() {
         }
 
         // Otherwise, get writeable database to update the data
-        val database: SQLiteDatabase = mDbHelper!!.getWritableDatabase()
+        val database: SQLiteDatabase = mDbHelper!!.writableDatabase
 
         // Returns the number of database rows affected by the update statement
         return database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs)
@@ -240,7 +240,24 @@ class PetProvider : ContentProvider() {
      * Delete the data at the given selection and selection arguments.
      */
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
-        return 0
+        var selection: String? = selection
+        var selectionArgs: Array<String>? = selectionArgs
+        // Get writeable database
+        val database: SQLiteDatabase = mDbHelper!!.getWritableDatabase()
+
+        val match: Int? = sUriMatcher.match(uri)
+        return when (match) {
+            PETS ->
+                // Delete all rows that match the selection and selection args
+                database.delete(PetEntry.TABLE_NAME, selection, selectionArgs)
+            PET_ID -> {
+                // Delete a single row given by the ID in the URI
+                selection = PetEntry._ID + "=?"
+                selectionArgs = arrayOf(ContentUris.parseId(uri).toString())
+                database.delete(PetEntry.TABLE_NAME, selection, selectionArgs)
+            }
+            else -> throw IllegalArgumentException("Deletion is not supported for $uri")
+        }
     }
 
     /**
