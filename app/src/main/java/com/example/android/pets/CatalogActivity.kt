@@ -29,6 +29,9 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ListView
 import com.example.android.pets.data.PetContract.PetEntry
+import android.content.ContentUris
+import android.net.Uri
+import android.widget.AdapterView
 
 
 /**
@@ -38,7 +41,7 @@ import com.example.android.pets.data.PetContract.PetEntry
 class CatalogActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> {
 
     /** Adapter for the ListView  */
-    lateinit var mCursorAdapter: PetCursorAdapter
+    private lateinit var mCursorAdapter: PetCursorAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +65,25 @@ class CatalogActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Curso
         // There is no pet data yet (until the loader finishes) so pass in null for the Cursor.
         mCursorAdapter = PetCursorAdapter(this, null)
         petListView.adapter = mCursorAdapter
+
+        // Setup the item click listener
+        petListView.onItemClickListener = AdapterView.OnItemClickListener { _, _, _, id ->
+            // Create new intent to go to {@link EditorActivity}
+            val intent = Intent(this@CatalogActivity, EditorActivity::class.java)
+
+            // Form the content URI that represents the specific pet that was clicked on,
+            // by appending the "id" (passed as input to this method) onto the
+            // {@link PetEntry#CONTENT_URI}.
+            // For example, the URI would be "content://com.example.android.pets/pets/2"
+            // if the pet with ID 2 was clicked on.
+            val currentPetUri: Uri = ContentUris.withAppendedId(PetEntry.CONTENT_URI, id)
+
+            // Set the URI on the data field of the intent
+            intent.data = currentPetUri
+
+            // Launch the {@link EditorActivity} to display the data for the current pet.
+            startActivity(intent)
+        }
 
         // Kick off the loader
         supportLoaderManager.initLoader(PET_LOADER, null, this)

@@ -32,7 +32,6 @@ import android.content.ContentValues
 import android.net.Uri
 
 
-
 /**
  * Allows user to create a new pet or edit an existing one.
  */
@@ -60,6 +59,21 @@ class EditorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_editor)
+
+        // Examine the intent that was used to launch this activity,
+        // in order to figure out if we're creating a new pet or editing an existing one.
+        val intent = intent
+        val currentPetUri = intent.data
+
+        // If the intent DOES NOT contain a pet content URI, then we know that we are
+        // creating a new pet.
+        title = if (currentPetUri == null) {
+            // This is a new pet, so change the app bar to say "Add a Pet"
+            getString(R.string.editor_activity_title_new_pet)
+        } else {
+            // Otherwise this is an existing pet, so change app bar to say "Edit Pet"
+            getString(R.string.editor_activity_title_edit_pet)
+        }
 
         // Find all relevant views that we will need to read user input from
         mNameEditText = findViewById<View>(R.id.edit_pet_name) as EditText
