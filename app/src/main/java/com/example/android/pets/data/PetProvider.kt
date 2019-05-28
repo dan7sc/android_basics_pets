@@ -264,12 +264,17 @@ class PetProvider : ContentProvider() {
      * Returns the MIME type of data for the content URI.
      */
     override fun getType(uri: Uri): String? {
-        return null
+        val match: Int? = sUriMatcher.match(uri)
+        return when (match) {
+            PETS -> PetEntry.CONTENT_LIST_TYPE
+            PET_ID -> PetEntry.CONTENT_ITEM_TYPE
+            else -> throw IllegalStateException("Unknown URI $uri with match $match")
+        }
     }
 
     companion object {
 
         /** Tag for the log messages  */
-        val LOG_TAG = PetProvider::class.java.simpleName
+        val LOG_TAG: String = PetProvider::class.java.simpleName
     }
 }
