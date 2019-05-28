@@ -31,6 +31,7 @@ import android.widget.ListView
 import com.example.android.pets.data.PetContract.PetEntry
 import android.content.ContentUris
 import android.net.Uri
+import android.util.Log
 import android.widget.AdapterView
 
 
@@ -106,7 +107,15 @@ class CatalogActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Curso
         // Use the {@link PetEntry#CONTENT_URI} to indicate that we want to insert
         // into the pets database table.
         // Receive the new content URI that will allow us to access Toto's data in the future.
-        val newUri = contentResolver.insert(PetEntry.CONTENT_URI, values)
+        val newUri: Uri? = contentResolver.insert(PetEntry.CONTENT_URI, values)
+    }
+
+    /**
+     * Helper method to delete all pets in the database.
+     */
+    private fun deleteAllPets() {
+        val rowsDeleted: Int = contentResolver.delete(PetEntry.CONTENT_URI, null, null)
+        Log.v("CatalogActivity", "$rowsDeleted rows deleted from pet database")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -125,9 +134,10 @@ class CatalogActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Curso
                 return true
             }
             // Respond to a click on the "Delete all entries" menu option
-            R.id.action_delete_all_entries ->
-                // Do nothing for now
+            R.id.action_delete_all_entries -> {
+                deleteAllPets()
                 return true
+            }
         }
         return super.onOptionsItemSelected(item)
     }
