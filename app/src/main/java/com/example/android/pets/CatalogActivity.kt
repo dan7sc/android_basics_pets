@@ -74,9 +74,12 @@ class CatalogActivity : AppCompatActivity() {
                 null, // Selection criteria
                 null) // The sort order for the returned rows
 
-
         // Find the ListView which will be populated with the pet data
         val petListView = findViewById<View>(R.id.list) as ListView
+
+        // Find and set empty view on the ListView, so that it only shows when the list has 0 items.
+        val emptyView = findViewById<View>(R.id.empty_view)
+        petListView.emptyView = emptyView
 
         // Setup an Adapter to create a list item for each row of pet data in the Cursor.
         val adapter = PetCursorAdapter(this, cursor!!)
