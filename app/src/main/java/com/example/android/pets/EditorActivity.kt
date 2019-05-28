@@ -130,22 +130,16 @@ class EditorActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor
             }
         }
     }
-
     /**
-     * Get user input from editor and save new pet into database.
+     * Get user input from editor and save pet into database.
      */
-    private fun insertPet() {
+    private fun savePet() {
         // Read from input fields
         // Use trim to eliminate leading or trailing white space
-//        val nameString: String = this.mNameEditText!!.text.toString().trim()
-//        val breedString: String = this.mBreedEditText!!.text.toString().trim()
-//        val weightString: String = this.mWeightEditText!!.text.toString().trim()
-//        val weight: Int = Integer.parseInt(weightString)
-
-        val nameString = mNameEditText!!.text.toString().trim { it <= ' ' }
-        val breedString = mBreedEditText!!.text.toString().trim { it <= ' ' }
-        val weightString = mWeightEditText!!.text.toString().trim { it <= ' ' }
-        val weight = Integer.parseInt(weightString)
+        val nameString: String = mNameEditText!!.text.toString().trim()
+        val breedString: String = mBreedEditText!!.text.toString().trim()
+        val weightString: String = mWeightEditText!!.text.toString().trim()
+        val weight: Int = Integer.parseInt(weightString)
 
         // Create a ContentValues object where column names are the keys,
         // and pet attributes from the editor are the values.
@@ -155,28 +149,39 @@ class EditorActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor
         values.put(PetEntry.COLUMN_PET_GENDER, mGender)
         values.put(PetEntry.COLUMN_PET_WEIGHT, weight)
 
-        // Insert a new pet into the provider, returning the content URI for the new pet.
-        val newUri: Uri? = contentResolver.insert(PetEntry.CONTENT_URI, values)
+        // Determine if this is a new or existing pet by checking if mCurrentPetUri is null or not
+        if (mCurrentPetUri == null) {
+            // This is a NEW pet, so insert a new pet into the provider,
+            // returning the content URI for the new pet.
+            val newUri: Uri? = contentResolver.insert(PetEntry.CONTENT_URI, values)
 
-        // Show a toast message depending on whether or not the insertion was successful
-//        if (newUri!!.equals((-1).toLong())) {
-//            // If the new content URI is null, then there was an error with insertion.
-//            Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
-//                    Toast.LENGTH_SHORT).show()
-//        } else {
-//            // Otherwise, the insertion was successful and we can display a toast.
-//            Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
-//                    Toast.LENGTH_SHORT).show()
-//        }
-
-        if (newUri == null) {
-            // If the new content URI is null, then there was an error with insertion.
-            Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
-                    Toast.LENGTH_SHORT).show()
+            // Show a toast message depending on whether or not the insertion was successful.
+            if (newUri == null) {
+                // If the new content URI is null, then there was an error with insertion.
+                Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
+                        Toast.LENGTH_SHORT).show()
+            } else {
+                // Otherwise, the insertion was successful and we can display a toast.
+                Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
+                        Toast.LENGTH_SHORT).show()
+            }
         } else {
-            // Otherwise, the insertion was successful and we can display a toast.
-            Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
-                    Toast.LENGTH_SHORT).show()
+            // Otherwise this is an EXISTING pet, so update the pet with content URI: mCurrentPetUri
+            // and pass in the new ContentValues. Pass in null for the selection and selection args
+            // because mCurrentPetUri will already identify the correct row in the database that
+            // we want to modify.
+            val rowsAffected = contentResolver.update(mCurrentPetUri, values, null, null)
+
+            // Show a toast message depending on whether or not the update was successful.
+            if (rowsAffected == 0) {
+                // If no rows were affected, then there was an error with the update.
+                Toast.makeText(this, getString(R.string.editor_update_pet_failed),
+                        Toast.LENGTH_SHORT).show()
+            } else {
+                // Otherwise, the update was successful and we can display a toast.
+                Toast.makeText(this, getString(R.string.editor_update_pet_successful),
+                        Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -193,7 +198,7 @@ class EditorActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor
             // Respond to a click on the "Save" menu option
             R.id.action_save -> {
                 // Save pet to database
-                insertPet()
+                savePet()
                 // Exit activity
                 finish()
                 return true
@@ -241,16 +246,16 @@ class EditorActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor
         // (This should be the only row in the cursor)
         if (cursor.moveToFirst()) {
             // Find the columns of pet attributes that we're interested in
-            val nameColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_NAME)
-            val breedColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_BREED)
-            val genderColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_GENDER)
-            val weightColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT)
+            val nameColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_NAME)
+            val breedColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_BREED)
+            val genderColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_GENDER)
+            val weightColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT)
 
             // Extract out the value from the Cursor for the given column index
-            val name = cursor.getString(nameColumnIndex)
-            val breed = cursor.getString(breedColumnIndex)
-            val gender = cursor.getInt(genderColumnIndex)
-            val weight = cursor.getInt(weightColumnIndex)
+            val name: String = cursor.getString(nameColumnIndex)
+            val breed: String = cursor.getString(breedColumnIndex)
+            val gender: Int = cursor.getInt(genderColumnIndex)
+            val weight: Int = cursor.getInt(weightColumnIndex)
 
             // Update the views on the screen with the values from the database
             mNameEditText!!.setText(name)
