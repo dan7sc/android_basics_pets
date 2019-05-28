@@ -175,14 +175,14 @@ class PetProvider : ContentProvider() {
         var selectionArgs: Array<String>? = selectionArgs
         val match: Int? = sUriMatcher.match(uri)
         return when (match) {
-            PETS -> updatePet(uri, contentValues!!, selection, selectionArgs)
+            PETS -> updatePet(contentValues!!, selection, selectionArgs)
             PET_ID -> {
                 // For the PET_ID code, extract out the ID from the URI,
                 // so we know which row to update. Selection will be "_id=?" and selection
                 // arguments will be a String array containing the actual ID.
                 selection = PetEntry._ID + "=?"
                 selectionArgs = arrayOf(ContentUris.parseId(uri).toString())
-                updatePet(uri, contentValues!!, selection, selectionArgs)
+                updatePet(contentValues!!, selection, selectionArgs)
             }
             else -> throw IllegalArgumentException("Update is not supported for $uri")
         }
@@ -193,13 +193,13 @@ class PetProvider : ContentProvider() {
      * specified in the selection and selection arguments (which could be 0 or 1 or more pets).
      * Return the number of rows that were successfully updated.
      */
-    private fun updatePet(uri: Uri, values: ContentValues, selection: String?, selectionArgs: Array<String>?): Int {
+    private fun updatePet(values: ContentValues, selection: String?, selectionArgs: Array<String>?): Int {
         // If the {@link PetEntry#COLUMN_PET_NAME} key is present,
         // check that the name value is not null.
         if (values.containsKey(PetEntry.COLUMN_PET_NAME)) {
             val name = values.getAsString(PetEntry.COLUMN_PET_NAME)
             if (name == null) {
-                throw IllegalArgumentException("Pet requires a name");
+                throw IllegalArgumentException("Pet requires a name")
             }
         }
 
@@ -243,7 +243,7 @@ class PetProvider : ContentProvider() {
         var selection: String? = selection
         var selectionArgs: Array<String>? = selectionArgs
         // Get writeable database
-        val database: SQLiteDatabase = mDbHelper!!.getWritableDatabase()
+        val database: SQLiteDatabase = mDbHelper!!.writableDatabase
 
         val match: Int? = sUriMatcher.match(uri)
         return when (match) {

@@ -24,9 +24,8 @@ import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.TextView
+import android.widget.ListView
 import com.example.android.pets.data.PetContract.PetEntry
-
 
 
 /**
@@ -75,51 +74,15 @@ class CatalogActivity : AppCompatActivity() {
                 null, // Selection criteria
                 null) // The sort order for the returned rows
 
-        val displayView: TextView = findViewById<View>(R.id.text_view_pet) as TextView
 
-        try {
-            // Create a header in the Text View that looks like this:
-            //
-            // The pets table contains <number of rows in Cursor> pets.
-            // _id - name - breed - gender - weight
-            //
-            // In the while loop below, iterate through the rows of the cursor and display
-            // the information from each column in this order.
-            displayView.text = "The pets table contains " + cursor!!.count + " pets.\n\n"
-            displayView.append(PetEntry._ID + " - " +
-                    PetEntry.COLUMN_PET_NAME + " - " +
-                    PetEntry.COLUMN_PET_BREED + " - " +
-                    PetEntry.COLUMN_PET_GENDER + " - " +
-                    PetEntry.COLUMN_PET_WEIGHT + "\n")
+        // Find the ListView which will be populated with the pet data
+        val petListView = findViewById<View>(R.id.list) as ListView
 
-            // Figure out the index of each column
-            val idColumnIndex: Int = cursor.getColumnIndex(PetEntry._ID)
-            val nameColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_NAME)
-            val breedColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_BREED)
-            val genderColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_GENDER)
-            val weightColumnIndex: Int = cursor.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT)
+        // Setup an Adapter to create a list item for each row of pet data in the Cursor.
+        val adapter = PetCursorAdapter(this, cursor!!)
 
-            // Iterate through all the returned rows in the cursor
-            while (cursor.moveToNext()) {
-                // Use that index to extract the String or Int value of the word
-                // at the current row the cursor is on.
-                val currentID: Int = cursor.getInt(idColumnIndex)
-                val currentName: String = cursor.getString(nameColumnIndex)
-                val currentBreed: String = cursor.getString(breedColumnIndex)
-                val currentGender: Int = cursor.getInt(genderColumnIndex)
-                val currentWeight: Int = cursor.getInt(weightColumnIndex)
-                // Display the values from each column of the current row in the cursor in the TextView
-                displayView.append("\n" + currentID + " - " +
-                        currentName + " - " +
-                        currentBreed + " - " +
-                        currentGender + " - " +
-                        currentWeight)
-            }
-        } finally {
-            // Always close the cursor when you're done reading from it. This releases all its
-            // resources and makes it invalid.
-            cursor!!.close()
-        }
+        // Attach the adapter to the ListView.
+        petListView.adapter = adapter
     }
 
     /**
